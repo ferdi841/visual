@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Pacar Virtual AI</title>
+  <style>
+    body { font-family: sans-serif; text-align:center; background:#f4f4f9; padding:20px; }
+    video { width:300px; border-radius:15px; }
+    textarea { width:80%; height:80px; margin-top:10px; font-size:16px; }
+    button { padding:10px 20px; margin:5px; font-size:16px; }
+  </style>
+</head>
+<body>
+  <h1>Pacar Virtual AI 💬</h1>
+  <video id="avatar" autoplay loop muted>
+    <source src="avatar-video.mp4" type="video/mp4">
+    Browser tidak mendukung video.
+  </video>
+  <br>
+  <textarea id="chatInput" placeholder="Ketik atau bicara ke pacarmu..."></textarea><br>
+  <button onclick="startVoice()">🎙️ Bicara</button>
+  <button onclick="sendToAI()">💬 Kirim ke AI</button>
+  <button onclick="sendToWA()">📲 Kirim ke WhatsApp</button>
+  <p id="aiReply"></p>
+
+  <script>
+    const API_KEY = "sk-..."; // ganti dengan API key kamu
+    const phone = "6289518371444"; // nomor WhatsApp kamu
+
+    function startVoice() {
+      const rec = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+      rec.lang = "id-ID"; rec.interimResults = false;
+      rec.onresult = e => {
+        document.getElementById("chatInput").value = e.results[0][0].transcript;
+        sendToAI();
+      };
+      rec.start();
+    }
+
+    async function sendToAI() {
+      const msg = document.getElementById("chatInput").value;
+      const res = await fetch("https://api.openai.com/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type":"application/json",
+          "Authorization": "Bearer " + API_KEY
+        },
+        body: JSON.stringify({
+          model:"gpt-3.5-turbo",
+          messages:[{role:"user", content:msg}]
+        })
+      });
+      const data = await res.json();
+      const text = data.choices[0].message.content;
+      document.getElementById("aiReply").innerText = text;
+      speechSynthesis.speak(new SpeechSynthesisUtterance(text));
+    }
+
+    function sendToWA() {
+      const txt = document.getElementById("chatInput").value;
+      window.open(`https://wa.me/${phone}?text=${encodeURIComponent(txt)}`, "_blank");
+    }
+  </script>
+</body>
+</html>
