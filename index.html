@@ -1,0 +1,109 @@
+
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Anita - Pacar Virtual Ferdi</title>
+  <style>
+    body {
+      margin: 0;
+      background: #0d0d0d;
+      color: #fff;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+    }
+    #anita-video {
+      width: 300px;
+      border-radius: 16px;
+      box-shadow: 0 0 20px rgba(255, 105, 180, 0.4);
+    }
+    #chat-box {
+      margin-top: 20px;
+      width: 90%;
+      max-width: 600px;
+      background: #1e1e1e;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
+    }
+    #messages {
+      height: 200px;
+      overflow-y: auto;
+      margin-bottom: 10px;
+    }
+    button {
+      background: #ff69b4;
+      color: white;
+      border: none;
+      padding: 10px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <video id="anita-video" autoplay loop muted>
+    <source src="anita-avatar.mp4" type="video/mp4">
+    Browser kamu tidak mendukung video.
+  </video>
+
+  <div id="chat-box">
+    <div id="messages"></div>
+    <button onclick="startVoiceChat()">Ngobrol sama Anita 🎤</button>
+  </div>
+
+  <script>
+    const messages = document.getElementById('messages');
+
+    async function speak(text) {
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.voice = speechSynthesis.getVoices().find(v => v.name.includes("Female") || v.lang.includes("id"));
+      speechSynthesis.speak(utterance);
+    }
+
+    async function askChatGPT(text) {
+      const res = await fetch("https://api.openai.com/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: "Bearer sk-KARzABswCD0m0565ti_Abw"
+        },
+        body: JSON.stringify({
+          model: "gpt-4",
+          messages: [
+            { role: "system", content: "Kamu adalah Anita, pacar virtual Ferdi. Jawablah dengan nada manja dan romantis." },
+            { role: "user", content: text }
+          ]
+        })
+      });
+      const data = await res.json();
+      return data.choices[0].message.content;
+    }
+
+    function startVoiceChat() {
+      const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+      recognition.lang = 'id-ID';
+      recognition.start();
+      recognition.onresult = async (event) => {
+        const text = event.results[0][0].transcript;
+        const userMsg = document.createElement('div');
+        userMsg.textContent = "🧍 Ferdi: " + text;
+        messages.appendChild(userMsg);
+
+        const reply = await askChatGPT(text);
+        const anitaMsg = document.createElement('div');
+        anitaMsg.textContent = "💖 Anita: " + reply;
+        messages.appendChild(anitaMsg);
+
+        speak(reply);
+        messages.scrollTop = messages.scrollHeight;
+      };
+    }
+  </script>
+</body>
+</html>
